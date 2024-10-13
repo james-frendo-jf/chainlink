@@ -1,0 +1,13 @@
+---
+- name: Install npm inside a Docker container
+  hosts: all
+  become: yes
+  tasks:
+
+    # Install Node.js and npm inside the container
+    - name: Install Node.js and npm inside the container
+      chainlink_sepolia:
+        container: npm_container
+        command: |
+          apt update &&
+          apt install -y nodejs npm

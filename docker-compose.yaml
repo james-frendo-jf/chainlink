@@ -1,0 +1,48 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=<password>
+      - POSTGRES_USER=chainlink
+      - POSTGRES_DB=chainlinkdb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d chainlinkdb -U chainlink"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  chainlink:
+    container_name: chainlink_sepolia
+    image: smartcontract/chainlink:2.17.0
+    volumes:
+      - ~/blockchain/config:/chainlink
+    ports:
+      - 6688:6688
+    command: node -config /chainlink/config.toml -secrets /chainlink/secrets.toml start -a /chainlink/.api
+    depends_on:
+      postgres:
+        condition: service_healthy
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=<password>
+    ports:
+      - 3000:3000
+  alert:
+    container_name: alertmanager
+    image: prom/alertmanager:latest
+    volumes:
+      - ~/blockchain/alertmanager.yml:/config
+    command: --config.file=/config
+    ports:
+      - 9093:9093
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ~/blockchain/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
